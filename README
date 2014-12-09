@@ -1,1 +1,359 @@
-Read ME
+Read ME# SapientNitro.com Redesign
+
+Originally composed by [Matt Przybylski](mailto:mprzybylski@sapient.com)
+
+Code for the SapientNitro.com redesign.
+
+---
+
+Table of Contents
+======
+
+1. Usage
+1. Generator Setup
+1. Style Guide
+1. Developer Guidelines
+    1. HTML
+    1. Sass/CSS
+    1. Javascript
+    1. Responsive
+1. Creating Components
+1. Analytics
+1. Icon Fonts
+
+---
+
+Usage
+======
+
+To get started with the code here you'll need a few things:
+
+- [node.js](http://nodejs.org/)/[npm](https://npmjs.org/) 
+- [Grunt](http://gruntjs.com/) (`npm install -g grunt-cli`)
+- [Yeoman/generator-generator](http://yeoman.io/generators.html) (`npm install -g yo generator-generator`)
+- generator-falcon (see **Generator Setup** below)
+- [Compass](http://compass-style.org/) (`gem install compass`)
+
+**NOTE: Installing Compass also installs Sass.**
+
+If you need help installing some of these tools on a PC, please see [this short YouTube video](http://www.youtube.com/watch?v=kXikXodx-y4).
+
+When you've got all that set up `cd` into the directory where you wish to clone the repo and checkout the code from the SVN repo given below
+
+```
+https://tools.sapient.com/svn/en_platform/trunk/Development/Code/Falcon-1.0
+```
+
+Now that you have the repository you'll need to `cd` into the working directory and download the project dependencies:
+
+```
+$ cd <<project foler>>
+$ npm install
+$ bower install
+```
+
+**NOTE: Depending on your system settings you may need to use `sudo` in front of any commands that don't execute correctly.**
+
+You're now ready to work on the project. Run the Grunt command to open up a local server and get all the benefits of using Grunt.
+
+```
+$ grunt server
+```
+
+Get to work!
+
+**NOTE: If you run into an `EMFILE, too many open files` error in Terminal, see [this](https://github.com/yeoman/yeoman/wiki/Additional-FAQ#q-im-getting-emfile-too-many-open-files).**
+
+---
+
+Generator Setup
+======
+
+To use the generator properly through the command line you have to link it in npm.  To do so, run the following:
+
+```
+$ cd falcon/generator-falcon
+$ npm install
+$ npm link
+```
+
+This creates a link on your system to the generator-falcon directory which will allow you to easily call the generator from the command line.
+
+*For instructions on using the Yeoman subgenerators, please see the `readme.md` in the generator-sn directory.*
+
+---
+
+Component List
+======
+After running grunt server you will have be able to see all the out-of-box components listed in the index.html.
+
+---
+
+## Responsive
+- Breakpoints are defined in 3 different places (for use in Jade, Sass [through Breakpoint], and JS):
+    - */app/jade/mixins/_variables.jade*
+    - */app/sass/defaults/_breakpoints.scss*
+    - */app/js/utils/settings.js*
+
+---
+
+Creating Components
+======
+
+Component creation is done through the command line and then manually hooked up where necessary.  The name given to a component should be unique and will need to match up with the contract JSON as well as conveyed to the CQ team for proper implementation.
+
+Every component has to have a unique `slug` for a given section that it lives in so that there is no errors when deep linking into a component.  For example, if you have two grid-gallery components in one JSON file, the slugs should be unique, such as `grid-gallery-0` and `grid-gallery-1`.  This way, when a deeplink is generated for that component, the shell knows what link its supposed to traverse to.
+
+The following steps outline how components are created:
+
+#### Create your component using the generator:
+
+Main level components should always be housed in a folder/path that is of the same name as they are for organizational purposes.  You can take a look of the current state of the components directory to see an example of how to properly path them.
+
+`yo sn:component [name] [path]`
+
+
+**EXAMPLE:**
+
+`yo sn:component image-holder image-holder`
+
+This creates the following files:
+
+- *image-holder.jade* inside of *app/jade/components/image-holder*
+- *_image-holder.scss* inside of *app/sass/views/components/image-holder*
+- *image-holder.json* inside of *app/data/components*
+- *image-holder.json* inside of *app/schema/components*
+- *image-holder.js* inside of *app/js/views/components/image-holder*
+
+#### Update the standalone JSON file for your component:
+
+In the *data/components* directory you will see the JSON file created for your component above.  Make sure to edit this file with all the properties your component needs as this file is then used to validate against the JSON schema.  **It's _extremely_ important to keep this file updated!**  Once you have established the proper JSON structure for your component you can copy it into a section's data file.
+
+#### Add your component to one of the section JSON files so that it shows up on the front-end during local testing:
+
+- Open `data/[section]/[section].json`
+- In the components array for a given page, add your component and its data in the same format
+
+
+**EXAMPLE:**
+
+```javascript
+{
+    "type": "image-holder",
+    "slug": "image-holder-0",
+    "isFullPage": false,
+    "theme": "",
+    ...rest of component data goes here...
+}
+```
+
+The `type`, `slug`, and `isFullPage` properties **are mandatory** for every component.  The `theme` property is a common convention used for components that need theme capabilities.  All other properties added are specific to your component and created as you see fit.
+
+#### Create a schema for your component:
+
+The schema is used to validate that components output from the CQ authoring environment have correctly structured JSON.  A barebones schema file is created for your component when you run the command through the generator.  This file will normally be updated/overwritten with a full schema and is really only there for example purposes and to serve as a reminder that it needs to be created.  **If properties are added or modified in the individual component JSONs then this will need to be updated as well.**
+
+The following is the best process for creating the schema for your component:
+
+1. Go to [http://www.jsonschema.net/](http://www.jsonschema.net/) to use the online Schema generator
+1. Copy your component JSON into the input field
+1. Click the corresponding button to generate the schema
+1. Click the **Review** button to see the generated schema
+1. Copy the generated JSON schema into your component's schema file
+1. Go through your generated schema and change the `required` property to `true` wherever an attribute is required for the component to work correctly
+1. Validate that the required properties that were created with your component JSON are still correctly set to be required (`type`, `slug`, and `isFullPage`)
+1. Save the file
+1. Run `grunt validate` to confirm that your schema validates accordingly (you will have to find your file in the list in the command line to ensure it's correctly validated)
+
+#### Add your component's Sass file to the main Sass file:
+
+- Open `sass/_global.scss`
+- Scroll to the bottom where all components are listed (look for the COMPONENTS comment) and add your component to the list
+- Only main level component imports should go here.  For sub views/sub components inside of a main level component, please import those in that component's Sass file separately.
+
+
+**EXAMPLE:**
+
+```css
+/* ----------------------------------------------------------------------------- *\
+   COMPONENTS
+\* ----------------------------------------------------------------------------- */
+
+@import "views/components/image-holder/image-holder";
+```
+
+You should now see your view on the page that corresponds to the JSON file you put it in.
+
+*You may need to restart Grunt if you get an error in the console as the new Jade file may not get taken into consideration as having been created yet.*
+
+---
+
+Analytics
+======
+The analytics implementation uses Omniture to track the site through five different channels:
+
+- Page tracking
+- Link tracking
+- Component tracking
+- Media tracking
+- Custom tracking
+
+## Testing
+To be able to test the tracking properly you'll need to follow these steps:
+
+1. Get an add-on for your favorite browser - http://omnibug.rosssimpson.com/chrome.html (Chrome) or https://addons.mozilla.org/en-US/firefox/addon/omnibug/ (Firefox)
+1. Add this bookmarklet to the same browser: `javascript:document.cookie='s_tagEnv=dev;%20path=/';void(0)`
+
+Once you've done the above, you can begin testing as follows:
+
+1. Load the site in your browser
+1. Use the bookmarklet to set a cookie
+1. Open your console and go to the **Omnibug** tab in your Developer Tools
+1. Reload the page
+
+You should now see tracking logs in your Omnibug tab.
+
+## Implementation
+The actual implementation is pretty straightforward and consists of multiple methods which can be found in the *app/js/utils/tracking.js* file.
+
+### Page tracking
+Page tracking (page method) is completely self-reliant and does not use any of the data from JSON. Due to some inconsistencies in requirements an exception has been added for the *Contact* page. Everything else is covered by this method. You may need to add more exceptions in the future to supply some additional variables specified in the requirements for your page.
+
+### Link tracking
+Link or CTA tracking (link method) is used to track clicks on CTAs. There are a few things you need to know about this method.
+
+First you need to ensure that the tracking object is present in your JSON file for every CTA that needs to be tracked. The example below shows how to handle the *numbered-list* component:
+
+```javascript
+"items": [
+    {
+        "path": "",
+        "text": "Submit your CV or resume using the online application form.",
+        "cta": "Submit",
+        "ctaUrl": "#",
+        "ctaImage": "http://ec2-54-197-239-81.compute-1.amazonaws.com/content/dam/sapientnitro/icons/icon-paperclip.png",
+        "tracking": {
+            "events": "",
+            "linkTrackEvents": "",
+            "linkTrackVars": "events,prop3,prop4",
+            "prop3": "Numbered List",
+            "prop4": "sdfsfs",
+            "omit": "sdfsfs"
+        }
+    },
+    ...
+]
+```
+
+You then need to add that data to your CTA which must be an `a` (anchor) element in order for this to work without having to trigger anything separately:
+
+```jade
+<% if (item.cta) { var dataString = encodeURI(JSON.stringify(item.tracking)); %>
+a(href="{{item.ctaUrl}}", class="numbered-list-cta", data-cta-tracking="{{dataString}}")
+    <% if (item.ctaImage) { %>
+    +image("{{item.ctaImage}}", "", "", true, true, true);
+    <% } %>
+    {{item.cta}}
+<% } %>
+```
+
+**Note that you need to use the encodeURI method to encode your tracking data and name your data attribute `data-cta-tracking`.**
+
+### Component tracking
+Component tracking (component method) relies on a few variables passed from CQ in the JSON for that component instance. It also falls back to use the mandatory `slug` property if the tracking object is not passed by CQ - not ideal, but better than just throwing an error. The Tracking object is mandatory for every component instance. Typically it looks like this in a JSON file and is placed at the same level as the `slug` property for that component:
+
+```javascript
+"slug": "numbered-list-0",
+"tracking": {
+    "eVar20": "Events",
+    "prop12": "Events"
+}
+```
+
+Note that the JS method simply grabs whatever is being passed from JSON and uses it for tracking, so your specific tracking object might be slightly different. You don't need to touch any other files as long as the object is present in your JSON file.
+
+### Media tracking
+The media (video) tracking is built into the Brightcove plugin and should not require further changes unless requirements are updated.  Furthermore, Omniture has built in tracking capabilities for some media events which do not require custom methods in the Tracking utility.
+
+**The plugin (app/js/libs/vendor/brightcoveAPI/jquery-brightcove-video.js) has been modified to accommodate our tracking needs so please ensure this file is not overwritten at any point with a newer version of the plugin.**
+
+### Custom tracking
+Custom tracking (custom method) is used to track anything that is not covered by the above. You should use this method to track anything that doesn’t fit the above four scenarios. It is very similar to the `link` method above in terms of implementation with a couple of important differences:
+
+1. You can apply it to any HTML tag, not just an `a` tag
+1. You must trigger the tracking call explicitly at the appropriate time for your purpose
+
+Below is an implementation example for a *grid-gallery* component instance.
+
+The JSON data looks like the following:
+
+```javascript
+"items": [
+    {
+        "type": "video",
+        "path": "http://54.197.239.81/content/dam/sapientnitro/grid-gallery/grid-gallery-01-desktop.jpg",
+        "thumbPath": "http://54.197.239.81/content/dam/sapientnitro/grid-gallery/grid-gallery-01-thumb-desktop.jpg",
+        "headerText": "The Makers",
+        "title1": "Boris",
+        "title2": "Stojanovic",
+        "subTitle": "Group Creative Director",
+        "videoPlayerID": "2874918293001",
+        "playerID": "2695065694001",
+        "tracking": {
+            "eVar20": "Image/Video Tray Carousel | tile1 tile2",
+            "prop12": "Image/Video Tray Carousel | tile1 tile2",
+            "omit": "Component View",
+            "events": "event24",
+            "linkTrackVars": "events,eVar20,prop12",
+            "linkTrackEvents": "event24"
+        }
+    },
+    ...
+]
+```
+
+You grab it and append to an HTML tag in your Jade template like so:
+
+```jade
+<% _.each(data.items, function(item) { var dataString = encodeURI(JSON.stringify(item.tracking)); %>
+li(class!="grid-gallery-item-{{item.type}}", data-custom-tracking="{{dataString}}")
+    ...
+<% }); %>
+```
+
+You can name your data attribute anything you'd like since you'll be using it later in your JS to trigger your tracking call. I suggest sticking to data-custom-tracking for consistency throughout the application.
+
+In your JavaScript view you then explicitly trigger a tracking call when appropriate:
+
+```javascript
+onAfter: function() {
+    ...
+    $(this).trigger('currentVisible', function(el) {
+        // trigger tracking upon loading a new slide
+        Tracking.custom(el.data('custom-tracking'));
+    });
+}
+```
+
+---
+
+Icon Fonts
+======
+Icon fonts are used throughout the site to alleviate the need for multiple images at different breakpoints and for smooth scaling at different resolutions/sizes/breakpoints.  SVGs should be created at 48x48 pixels and centered on the canvas to ensure proper scaling to align with previously created icons.  The longer of the two dimensions will dictate how the 48x48 area is filled (when an icon is taller than wider, the taller dimension should extend to the edges and the width should be centered and vice versa when its wider than taller).
+
+To update the icon font used on the site it is important to take the following steps accordingly:
+
+1. Copy the new icon SVGs into the `bin/icons` directory (see note below).
+1. Go to [http://icomoon.io/app](http://icomoon.io/app).
+1. Click the **Import Icons** button and locate the `selection.json` file in the `bin/icomoon/fonts` directory of the project. This will import all the current icons into the app so you can add/edit/remove.
+1. Make your edits and when finished click the **Font** button (make sure all the icons are selected first before clicking **Font**).
+1. Click the **Download** button to save the files to your machine and unzip that file.
+1. Make a copy of the unzipped folder and move it into `bin/` (the folder you unzipped/copied should be called `icomoon`) so that we have an easy way to reference the demo file to see all possible icons as well as that the latest version of the Style Guide gets updated automatically.
+1. In the zip file's `fonts` directory, copy all files and overwrite what is in the original `app/css/fonts/icons` directory in the project.
+1. From the downloaded files, rename `style.css` to `_icons.scss` and copy the renamed file into `app/sass/fonts`, overwriting the old one.
+1. Open up the new `_icons.scss` file and do a Find/Replace for *fonts/* with *fonts/icons/* and save the file. **You MUST replace these exact words with the slashes as shown.**
+1. The Style Guide also needs to be updated with the new icons.  All you have to do is open up the `app/jade/style-guide/index.jade` file and re-save it while Grunt is running. This will re-compile the new `demo.html` files into the Style Guide.
+
+The icon fonts should now be ready for use.
+
+**NOTE: The icons are duplicated into the dev repo at `bin/icons` because there have been issues with files getting overridden in the creative Box folders.  This directory should be kept up to date and ensure that duplicate icons are not being created in the future.  Please be cognizant of names in this folder as these will be the class names that get generated (icon-[file-name]) and make sure any new icons don't overwrite current ones as well as create duplicates when they are imported into the icomoon app.  The naming convention for the SVG files should be hyphenated words (as in your-name.svg or your-full-name.svg, for example).**
